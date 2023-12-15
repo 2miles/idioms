@@ -40,7 +40,9 @@ def write_list_to_csv(data_list, csv_file_path, title=True):
             csv_writer = csv.writer(csv_file)
             # Write header row if needed
             if title:
-                csv_writer.writerow(["Order", "Title", "New_Title", "Definition"])
+                csv_writer.writerow(
+                    ["order_col", "title_og", "title_new", "definition"]
+                )
             # Write data rows
             for item in data_list:
                 csv_writer.writerow(item)
@@ -207,8 +209,8 @@ def update_csv(idioms_csv, res_txt):
     sorted_list.insert(0, header)
     write_list_to_csv(sorted_list, "s.csv", False)
     split_csv("s.csv", "c.csv", "i.csv")
-    sort_csv("c.csv", "idioms_complete_sorted.csv")
-    sort_csv("i.csv", "idioms_incomplete_sorted.csv")
+    sort_csv("c.csv", "idioms_complete.csv")
+    sort_csv("i.csv", "idioms_incomplete.csv")
     sort_csv("s.csv", "idioms.csv")
 
     try:
@@ -229,5 +231,4 @@ def update_csv(idioms_csv, res_txt):
 
 
 if __name__ == "__main__":
-    # update_csv(main_csv, results)
     update_csv("idioms.csv", "new_results.txt")
