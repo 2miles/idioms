@@ -107,6 +107,49 @@ def scrape_free_dictionary(idiom, delay):
     return result
 
 
+def scrape_cambridge(idiom, delay):
+    """
+    Returns `(title, definition)` pair scraped from dictionary.cmbridne.org with `idiom` as the search term.
+    """
+    idiom = idiom.replace(" ", "-")
+    url = f"https://dictionary.cambridge.org/dictionary/english/{idiom}"
+    response = requests.get(url)
+    result = ("", "")
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, "html.parser")
+        def_elem = soup.find(class_="ddef_h")
+        # write_to_file(def_elem.prettify(), "def_pretty.txt")
+        title = definition = ""
+        if def_elem:
+            print(def_elem.prettify())
+            # data_src = def_elem.find(True, recursive=False)
+            # if data_src:
+            #     header_text = soup.find("h2")
+            #     if header_text:
+            #         title = header_text.text.strip()
+            #         # write_to_file(soup.find("h2").find_next_sibling(), "after_h2.txt")
+            #         # Get the text from the <div> element without including text from its sub-elements
+            #         if header_text.find_next_sibling():
+            #             if header_text.find_next_sibling().findAll(
+            #                 text=True, recursive=False
+            #             ):
+            #                 definition = header_text.find_next_sibling().findAll(
+            #                     text=True, recursive=False
+            #                 )[0]
+            #     result = (title, definition)
+            # else:
+            #     print("No definition found.")
+        else:
+            print("Parent element not found.")
+
+    else:
+        print(
+            f"Failed to retrieve data for {idiom.replace(' ','+') }. Status code: {response.status_code}"
+        )
+    time.sleep(delay)
+    return result
+
+
 def create_scraped_data_text_file(input_md, delay):
     """
     Scrapes Free Dictionary for the idioms of `idioms` list
@@ -133,4 +176,5 @@ if __name__ == "__main__":
     delay = 10  # seconds between each request
     input_file = "incoming.md"
     # Reads list from md file `input_file` and creates a text data file `new_results.txt`
-    idioms_data = create_scraped_data_text_file(input_file, delay)
+    # idioms_data = create_scraped_data_text_file(input_file, delay)
+    scrape_cambridge("dont put all your eggs in one basket", delay)
