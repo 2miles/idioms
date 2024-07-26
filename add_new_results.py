@@ -3,6 +3,20 @@ import csv
 import os
 
 
+"""
+Update the main idioms csv, `idioms.csv` with the the newly scraped definitions in `new_results.txt`.
+
+Process:
+- Read new data from a text file.
+- Integrate this data into the main CSV file with proper enumeration and formatting.
+- Sort and split the data into complete and incomplete entries.
+- Clean up temporary files after updating the main CSV file.
+
+The final result is an updated CSV file (idioms.csv), along with separate CSVs 
+for complete (idioms_complete.csv) and incomplete (idioms_incomplete.csv) entries.
+"""
+
+
 def read_scraper_results(file_path):
     """
     Convert the scraper results in `file_path`:

@@ -3,6 +3,26 @@ import time
 import markdown2 as m2
 from bs4 import BeautifulSoup
 
+"""
+Scrapes Free Dictionary for the idioms of `incoming.md` list of the form:
+
+```
+1. Middle of the road
+2. stick up your ass
+3. up in the air
+```
+Waits 10 seconds between calls to not get 403 errors when crawling.
+Prints the process to the console as its crawling.
+Writes the results to file `new_results.txt` which is of the form:
+
+```
+['title_1, 'title_1_convert', 'definition_1']
+['title_2, 'title_2_convert', 'definition_2']
+['title_3, '', '']
+```
+
+"""
+
 
 def read_markdown_list(file_path):
     """
@@ -176,5 +196,5 @@ if __name__ == "__main__":
     delay = 10  # seconds between each request
     input_file = "incoming.md"
     # Reads list from md file `input_file` and creates a text data file `new_results.txt`
-    # idioms_data = create_scraped_data_text_file(input_file, delay)
-    scrape_cambridge("dont put all your eggs in one basket", delay)
+    idioms_data = create_scraped_data_text_file(input_file, delay)
+    # scrape_cambridge("dont put all your eggs in one basket", delay)
