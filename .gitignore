@@ -1,4 +1,5 @@
 .venv/
 openai_stuff/
 
-.env/
+.env
+.DS_Store
