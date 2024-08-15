@@ -1059,3 +1059,17 @@
 1059. In a pinch
 1060. To put someone on the spot
 1061. As the twig is bent so grows the tree
+1062. Middle of the road
+1063. stick up your ass
+1064. up in the air
+1065. spit on your grave
+1066. dont piss into the wind
+1067. go to bat
+1068. cooking something up
+1069. thumb up your ass
+1070. shit dont stink
+1071. cherry picking
+1072. hot to trot
+1073. a wake up call
+1074. cutting your teeth on something
+1075. dont go chasing waterfalls
