@@ -2,6 +2,9 @@ import ast
 import csv
 import os
 
+"""
+THIS WHOLE SCRIPT NEEDS AN OVERHAUL
+"""
 
 """
 Update the main idioms csv, `idioms.csv` with the the newly scraped definitions in `new_results.txt`.
