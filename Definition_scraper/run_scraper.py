@@ -2,9 +2,10 @@ import requests
 import time
 import markdown2 as m2
 from bs4 import BeautifulSoup
+import argparse
 
 """
-Scrapes Free Dictionary for the idioms of `incoming.md` list of the form:
+Scrapes Free Dictionary for the idioms in input list of the form:
 
 ```
 1. Middle of the road
@@ -170,7 +171,7 @@ def scrape_cambridge(idiom, delay):
     return result
 
 
-def create_scraped_data_text_file(input_md, delay):
+def create_scraped_data_text_file(input_md, output_file, delay):
     """
     Scrapes Free Dictionary for the idioms of `idioms` list
     Waits 10 seconds between calls to not get 403 errors when crawling.
@@ -188,13 +189,32 @@ def create_scraped_data_text_file(input_md, delay):
         free_dict_result = scrape_free_dictionary(idiom, delay)
         data.append([idiom, free_dict_result[0], free_dict_result[1]])
         print(free_dict_result[0])
-    write_list_to_file(data, f"new_results.txt")
+    write_list_to_file(data, output_file)
     return data
 
 
 if __name__ == "__main__":
-    delay = 10  # seconds between each request
-    input_file = "incoming.md"
+
+    parser = argparse.ArgumentParser(
+        description="Scrape idioms and definitions from online dictionaries."
+    )
+    parser.add_argument(
+        "input_file",
+        help="The markdown file containing the list of idioms.",
+    )
+    parser.add_argument(
+        "output_file", help="The output file to write the scraped data."
+    )
+    parser.add_argument(
+        "--delay", type=int, default=10, help="Delay in seconds between each request."
+    )
+    args = parser.parse_args()
+
+    # input_file = "incoming.md"
     # Reads list from md file `input_file` and creates a text data file `new_results.txt`
-    idioms_data = create_scraped_data_text_file(input_file, delay)
     # scrape_cambridge("dont put all your eggs in one basket", delay)
+
+    # Reads list from md file `input_file` and creates a text data file `output_file`
+    idioms_data = create_scraped_data_text_file(
+        args.input_file, args.output_file, args.delay
+    )
