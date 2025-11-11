@@ -3,3 +3,8 @@ openai_stuff/
 
 .env
 .DS_Store
+
+# Python cache / build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
