@@ -1,26 +1,27 @@
 import argparse
-
+from pipelines.definitions.fetch_missing import fetch_missing_definitions
 from pipelines.definitions.stage_results import create_scraped_data_text_file
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(
-        description="Scrape idioms and definitions from online dictionaries."
+        description="Scrape idioms missing definitions from Supabase and stage new results."
     )
     parser.add_argument(
-        "input_file",
-        help="The markdown file containing the list of idioms.",
+        "--limit", type=int, default=50, help="Maximum number of idioms to fetch and scrape."
     )
-    parser.add_argument("output_file", help="The output file to write the scraped data.")
     parser.add_argument(
-        "--delay", type=int, default=10, help="Delay in seconds between each request."
+        "--delay", type=int, default=10, help="Delay in seconds between each scrape request."
     )
     args = parser.parse_args()
 
-    # input_file = "incoming.md"
-    # Reads list from md file `input_file` and creates a text data file `new_results.txt`
-    # scrape_cambridge("dont put all your eggs in one basket", delay)
+    # Step 1: fetch missing idioms directly from Supabase
+    idioms = fetch_missing_definitions(limit=args.limit)
+    print(f"📥 Fetched {len(idioms)} idioms missing definitions from database.")
 
-    # Reads list from md file `input_file` and creates a text data file `output_file`
-    idioms_data = create_scraped_data_text_file(args.input_file, args.output_file, args.delay)
+    # Step 2: run the scraping stage on those idioms
+    create_scraped_data_text_file(idioms, args.delay)
+
+
+if __name__ == "__main__":
+    main()

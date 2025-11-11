@@ -8,6 +8,11 @@
 
 # Once you like the results, you can run a future apply_results.py (or add that function here) to push them to Supabase.
 
+# THE IDEA
+#
+#  - You no longer read from a file (input_md).
+# - You no longer need to write out results to a text file unless you want a debug artifact.
+# - Instead, you’ll iterate through the idioms fetched from Supabase, scrape them, and upsert results (and optionally log attempts).
 
 # used to print out soup element of website to understand structure
 from pipelines.definitions.fetch_missing import read_markdown_list
@@ -73,3 +78,67 @@ def create_scraped_data_text_file(input_md, output_file, delay):
         print(free_dict_result[0])
     write_list_to_file(data, output_file)
     return data
+
+
+from connectors.supabase import upsert_definition, log_scrape_attempt
+from pipelines.definitions.scrape_sources import scrape_free_dictionary
+
+
+# split into
+# 1. scrape_definitions() → collects results only
+# 2. stage_definitions() → saves results to a staging store for review
+# 3. apply_definitions() → upserts only the rows you’ve approved
+def process_definitions(idioms, delay):
+    """
+    Scrape and upsert definitions for idioms missing data.
+
+    Args:
+        idioms (list[dict]): list of {'id': int, 'idiom': str}
+        delay (int): delay between scrapes to avoid rate limits
+    """
+    results = []
+
+    for row in idioms:
+        idiom_id = row["id"]
+        idiom_text = row["idiom"]
+
+        print(f"🔍 Scraping: {idiom_text} (id={idiom_id})")
+
+        try:
+            result = scrape_free_dictionary(idiom_text, delay)
+
+            # Pull fields from result
+            definition = result["definition"]
+            status = result["status"]
+            scraped_title = result["scraped_title"]
+            source = "FreeDictionary"
+
+            if status == "success" and definition:
+                # TODO
+                # upsert_definition(idiom_id, definition, source)
+                # TODO
+                # log_scrape_attempt(idiom_id, "definition", "success", source)
+                results.append((idiom_text, "success"))
+                print(f"✅ Added definition for: {idiom_text} → {scraped_title}")
+
+            elif status == "not_found":
+                # TODO
+                # log_scrape_attempt(idiom_id, "definition", "not_found", source)
+                results.append((idiom_text, "not_found"))
+                print(f"⚠️ No definition found for: {idiom_text}")
+
+            else:
+                # Covers error, HTTP failures, etc.
+                # TODO
+                # log_scrape_attempt(idiom_id, "definition", status, source)
+                results.append((idiom_text, status))
+                print(f"⚠️ Skipped {idiom_text} ({status})")
+
+        except Exception as e:
+            # TODO
+            # log_scrape_attempt(idiom_id, "definition", "error", "FreeDictionary", str(e))
+            results.append((idiom_text, "error"))
+            print(f"❌ Error scraping {idiom_text}: {e}")
+
+    print(f"\n📊 Finished: {len(results)} scrapes attempted")
+    return results
