@@ -1,144 +1,33 @@
-# Purpose: save and review what you scraped before updating the DB.
-
-# It takes the results list from scrape_sources.py and:
-# - writes a CSV/JSON file to review/exports/
-# - (e.g. definitions_2025-11-10.json)
-# - optionally filters or formats the text
-# - logs summary stats (e.g. “30 success, 5 not found, 2 errors”)
-
-# Once you like the results, you can run a future apply_results.py (or add that function here) to push them to Supabase.
-
-# THE IDEA
-#
-#  - You no longer read from a file (input_md).
-# - You no longer need to write out results to a text file unless you want a debug artifact.
-# - Instead, you’ll iterate through the idioms fetched from Supabase, scrape them, and upsert results (and optionally log attempts).
-
-# used to print out soup element of website to understand structure
-from pipelines.definitions.fetch_missing import read_markdown_list
 from pipelines.definitions.scrape_sources import scrape_free_dictionary
 
+from connectors.supabase import get_conn
 
-def write_to_file(output_string, file_path):
+
+def stage_definitions(results):
     """
-    Write a string to a file.
-
-    Args:
-        output_string (str): The string to be written to the file.
-        file_path (str): The path to the file where the string will be written.
-
-    Returns:
-        None
+    Insert scraped definitions into staging_scrapes.
+    Inserts all results, marking 'success' as pending and others as rejected.
+    Returns a summary dict for optional logging.
     """
-    try:
-        with open(file_path, "w") as file:
-            file.write(output_string)
-        print(f"String successfully written to {file_path}")
-    except Exception as e:
-        print(f"Error writing to file: {e}")
+    with get_conn() as conn, conn.cursor() as cur:
+        for row in results:
+            review_status = "pending" if row["status"] == "success" else "rejected"
+            cur.execute(
+                """
+                INSERT INTO staging_scrapes (idiom_id, job, content, status, review_status)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (idiom_id, job) DO UPDATE
+                    SET status = EXCLUDED.status,
+                        content = EXCLUDED.content,
+                        review_status = EXCLUDED.review_status;
+                """,
+                (row["idiom_id"], row["job"], row["content"], row["status"], review_status),
+            )
+        conn.commit()
 
-
-def write_list_to_file(my_list, file_path):
-    """
-    Write a Python list to a file with each element on a new line.
-
-    Args:
-        my_list (list): The list to be written to the file.
-        file_path (str): The path to the file where the list will be written.
-
-    Returns:
-        None
-    """
-    try:
-        with open(file_path, "w") as file:
-            for item in my_list:
-                file.write(f"{item}\n")
-        print(f"List successfully written to {file_path}")
-    except Exception as e:
-        print(f"Error writing to file: {e}")
-
-
-def create_scraped_data_text_file(input_md, output_file, delay):
-    """
-    Scrapes Free Dictionary for the idioms of `idioms` list
-    Waits 10 seconds between calls to not get 403 errors when crawling.
-    Prints the process to the console as its crawling.
-    Writes the results to file in the form:
-    ```
-    ['title_1, 'title_1_convert', 'definition_1']
-    ['title_2, 'title_2_convert', 'definition_2']
-    ['title_3, '', '']
-    ```
-    """
-    data = []
-    idioms = read_markdown_list(input_md)
-    for idiom in idioms:
-        free_dict_result = scrape_free_dictionary(idiom, delay)
-        data.append([idiom, free_dict_result[0], free_dict_result[1]])
-        print(free_dict_result[0])
-    write_list_to_file(data, output_file)
-    return data
-
-
-from connectors.supabase import upsert_definition, log_scrape_attempt
-from pipelines.definitions.scrape_sources import scrape_free_dictionary
-
-
-# split into
-# 1. scrape_definitions() → collects results only
-# 2. stage_definitions() → saves results to a staging store for review
-# 3. apply_definitions() → upserts only the rows you’ve approved
-def process_definitions(idioms, delay):
-    """
-    Scrape and upsert definitions for idioms missing data.
-
-    Args:
-        idioms (list[dict]): list of {'id': int, 'idiom': str}
-        delay (int): delay between scrapes to avoid rate limits
-    """
-    results = []
-
-    for row in idioms:
-        idiom_id = row["id"]
-        idiom_text = row["idiom"]
-
-        print(f"🔍 Scraping: {idiom_text} (id={idiom_id})")
-
-        try:
-            result = scrape_free_dictionary(idiom_text, delay)
-
-            # Pull fields from result
-            definition = result["definition"]
-            status = result["status"]
-            scraped_title = result["scraped_title"]
-            source = "FreeDictionary"
-
-            if status == "success" and definition:
-                # TODO
-                # upsert_definition(idiom_id, definition, source)
-                # TODO
-                # log_scrape_attempt(idiom_id, "definition", "success", source)
-                results.append((idiom_text, "success"))
-                print(f"✅ Added definition for: {idiom_text} → {scraped_title}")
-
-            elif status == "not_found":
-                # TODO
-                # log_scrape_attempt(idiom_id, "definition", "not_found", source)
-                results.append((idiom_text, "not_found"))
-                print(f"⚠️ No definition found for: {idiom_text}")
-
-            else:
-                # Covers error, HTTP failures, etc.
-                # TODO
-                # log_scrape_attempt(idiom_id, "definition", status, source)
-                results.append((idiom_text, status))
-                print(f"⚠️ Skipped {idiom_text} ({status})")
-
-        except Exception as e:
-            # TODO
-            # log_scrape_attempt(idiom_id, "definition", "error", "FreeDictionary", str(e))
-            results.append((idiom_text, "error"))
-            print(f"❌ Error scraping {idiom_text}: {e}")
-
-    print(f"\n📊 Finished: {len(results)} scrapes attempted")
-    return results
+    summary = {
+        "success": sum(1 for r in results if r["status"] == "success"),
+        "rejected": sum(1 for r in results if r["status"] != "success"),
+        "total": len(results),
+    }
+    return summary
