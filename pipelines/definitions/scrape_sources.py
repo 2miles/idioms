@@ -115,7 +115,7 @@ def scrape_free_dictionary(idiom: str, delay: int = 10):
         response = requests.get(url, timeout=10)
         if response.status_code != 200:
             result["status"] = f"http_{response.status_code}"
-            print(f"⚠️ Failed ({response.status_code}) for {searched_title}")
+            print(f"⚠️ Failed ({response.status_code})")
             return result
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -123,7 +123,7 @@ def scrape_free_dictionary(idiom: str, delay: int = 10):
 
         if not def_elem:
             result["status"] = "not_found"
-            print(f"⚠️ No definition block found for {searched_title}")
+            print(f"⚠️ No definition block found")
             return result
 
         header = soup.find("h2")
@@ -141,14 +141,14 @@ def scrape_free_dictionary(idiom: str, delay: int = 10):
                     print(f"✅ Scraped: {searched_title} → {scraped_title}")
                 else:
                     result["status"] = "not_found"
-                    print(f"⚠️ Definition text empty for {searched_title}")
+                    print(f"⚠️ Definition text empty")
         else:
             result["status"] = "not_found"
-            print(f"⚠️ No <h2> header found for {searched_title}")
+            print(f"⚠️ No <h2> header found")
 
     except Exception as e:
         result["status"] = "error"
-        print(f"❌ Error scraping {searched_title}: {e}")
+        print(f"❌ Error scraping: {e}")
 
     finally:
         time.sleep(delay)

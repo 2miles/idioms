@@ -6,7 +6,9 @@ from pipelines.definitions.stage_results import stage_definitions
 from pipelines.definitions.apply_definitions import apply_definitions
 
 
-def run_pipeline(limit: int = 50, delay: int = 10, apply: bool = False):
+def run_pipeline(
+    limit: int = 50, delay: int = 10, apply: bool = False, retry_rejected: bool = False
+):
     """
     Orchestrates the full 'definitions' pipeline:
     1. Fetch idioms missing definitions
@@ -16,7 +18,7 @@ def run_pipeline(limit: int = 50, delay: int = 10, apply: bool = False):
     """
     print("🚀 Starting definition pipeline...\n")
 
-    idioms = get_idioms_missing_definitions(limit)
+    idioms = get_idioms_missing_definitions(limit, retry_rejected)
     if not idioms:
         print("✅ No idioms missing definitions — nothing to scrape.")
         return
@@ -47,9 +49,12 @@ def main():
     parser.add_argument(
         "--apply", action="store_true", help="Also apply approved definitions after staging"
     )
+    parser.add_argument("--retry-rejected", action="store_true")
     args = parser.parse_args()
 
-    run_pipeline(limit=args.limit, delay=args.delay, apply=args.apply)
+    run_pipeline(
+        limit=args.limit, delay=args.delay, apply=args.apply, retry_rejected=args.retry_rejected
+    )
 
 
 if __name__ == "__main__":

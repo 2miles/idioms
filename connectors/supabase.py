@@ -11,19 +11,47 @@ def get_conn():
     return psycopg2.connect(DB_URL)
 
 
-def get_idioms_missing_definitions(limit=100):
-    """Fetch idioms with no definition (for scraping)."""
+# def get_idioms_missing_definitions(limit=100):
+#     """Fetch idioms with no definition (for scraping)."""
+#     with get_conn() as conn, conn.cursor() as cur:
+#         cur.execute(
+#             """
+#             SELECT id, title AS idiom
+#             FROM idioms
+#             WHERE definition IS NULL
+#             ORDER BY id
+#             LIMIT %s;
+#         """,
+#             (limit,),
+#         )
+#         return [{"id": r[0], "idiom": r[1]} for r in cur.fetchall()]
+
+
+def get_idioms_missing_definitions(limit=100, retry_rejected=False):
     with get_conn() as conn, conn.cursor() as cur:
+
+        if retry_rejected:
+            review_states_to_skip = ("pending", "approved")
+        else:
+            review_states_to_skip = ("pending", "approved", "rejected")
+
         cur.execute(
-            """
-            SELECT id, title AS idiom
-            FROM idioms
-            WHERE definition IS NULL
-            ORDER BY id
+            f"""
+            SELECT i.id, i.title AS idiom
+            FROM idioms i
+            WHERE i.definition IS NULL
+              AND NOT EXISTS (
+                SELECT 1 FROM staging_scrapes s
+                WHERE s.idiom_id = i.id
+                  AND s.job = 'definition'
+                  AND s.review_status IN %s
+              )
+            ORDER BY i.id
             LIMIT %s;
-        """,
-            (limit,),
+            """,
+            (tuple(review_states_to_skip), limit),
         )
+
         return [{"id": r[0], "idiom": r[1]} for r in cur.fetchall()]
 
 

@@ -17,7 +17,7 @@ def scrape_definitions(idioms: list[dict], delay: int):
         idiom_id = row["id"]
         idiom_text = row["idiom"]
 
-        print(f"🔍 Scraping: {idiom_text} (id={idiom_id})")
+        print(f"🔍 Scraping: {idiom_text}")
         res = scrape_free_dictionary(idiom_text, delay)
 
         definition = (res.get("definition") or "").strip()
@@ -35,10 +35,6 @@ def scrape_definitions(idioms: list[dict], delay: int):
 
         if status == "success" and definition:
             print(f"✅ Got definition for: {idiom_text}")
-        elif status == "not_found":
-            print(f"⚠️ No definition found for: {idiom_text}")
-        else:
-            print(f"⚠️ Skipped {idiom_text} ({status})")
 
     print(f"\n📊 scrape_definitions: {len(results)} results collected")
     return results
