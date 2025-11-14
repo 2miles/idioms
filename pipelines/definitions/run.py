@@ -18,7 +18,7 @@ def run_pipeline(
     """
     print("🚀 Starting definition pipeline...\n")
 
-    idioms = get_idioms_missing_definitions(limit, retry_rejected)
+    idioms = get_idioms_missing_definitions(limit=limit, retry_rejected=retry_rejected)
     if not idioms:
         print("✅ No idioms missing definitions — nothing to scrape.")
         return
