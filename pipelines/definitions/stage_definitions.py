@@ -1,5 +1,3 @@
-from pipelines.definitions.scrape_sources import scrape_free_dictionary
-
 from connectors.supabase import get_conn
 
 

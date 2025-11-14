@@ -1,8 +1,8 @@
 import argparse
 
-from connectors.supabase import get_idioms_missing_definitions
+from pipelines.definitions.get_idioms import get_idioms_missing_definitions
 from pipelines.definitions.scrape_definitions import scrape_definitions
-from pipelines.definitions.stage_results import stage_definitions
+from pipelines.definitions.stage_definitions import stage_definitions
 from pipelines.definitions.apply_definitions import apply_definitions
 
 
@@ -46,15 +46,10 @@ def main():
     parser.add_argument(
         "--delay", type=int, default=10, help="Delay (in seconds) between HTTP requests"
     )
-    parser.add_argument(
-        "--apply", action="store_true", help="Also apply approved definitions after staging"
-    )
     parser.add_argument("--retry-rejected", action="store_true")
     args = parser.parse_args()
 
-    run_pipeline(
-        limit=args.limit, delay=args.delay, apply=args.apply, retry_rejected=args.retry_rejected
-    )
+    run_pipeline(limit=args.limit, delay=args.delay, retry_rejected=args.retry_rejected)
 
 
 if __name__ == "__main__":
