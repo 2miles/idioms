@@ -1,67 +1,69 @@
-# Idioms
+# Definitions Pipeline (Quick Guide)
 
-This repo contains all my scripts used to collect and manage the data for my idiom app. It also contains scripts for accessing the database and importing and exporting.
+A simple workflow for scraping, reviewing, and applying idiom definitions.
 
-## Definition Scraper
+## 1. Scrape missing definitions
 
-It takes that list and scrapes free dictionary for definitions for every idiom in the list. The output will be a `.txt` file with the idioms, and their definitions.
-
-- It is expecting a numbered markdown list of idioms to be in the directory.
-
-### How to run
-
-```shell
- python3 run_scraper input.md output.txt
+```bash
+python3 -m pipelines.definitions.run
 ```
 
-There will be some console log output as it is scraping. It takes a bit of time. The default delay is 10 seconds for each idiom. For example to change the delay to 5 seconds instead run the command like this:
+Scrapes definitions for idioms with no definition and inserts them into `staging_scrapes` table in Supabase with `review_status = 'pending'`.
 
-```shell
- python3 run_scraper input.md output.txt 5
+## 2. Review and edit
+
+Open `staging_scrapes` in the DB UI.
+
+For each job = 'definition' row:
+
+- Edit content if needed.
+- Set review_status = 'apprived' for the definition you want
+- (Optional) set the status as 'rejected' if you dont like it.
+
+Only rows marked apprived will be applied.
+
+## 3. Apply approved definitions
+
+```bash
+python3 -m pipelines.definitions.apply_definitions
 ```
 
-### input:
+This writes the approved definition into idioms.definition and marks the staging row as applied.
 
-```markdown
-1. Middle of the road
-2. stick up your ass
-3. up in the air
-4. spit on your grave
-5. dont piss into the wind
-6. go to bat
-7. cooking something up
-8. thumb up your ass
-9. shit dont stink
-10. cherry picking
-11. hot to trot
-12. a wake up call
-13. cutting your teeth on something
-14. dont go chasing waterfalls
+## 4. Cleanup
+
+```bash
+python3 -m pipelines.definitions.cleanup
 ```
 
-### output:
+Removes all applied definition rows from staging.
 
-```
-['Middle of the road', 'middle-of-the-road', '1. Describing an option that is neither the most nor the least expensive. ']
-['stick up your ass', "stick up (one's) ass", ' A rigid and uptight demeanor. ']
-['up in the air', 'be up in the air', 'To be uncertain or subject to change. ']
-['spit on your grave', '', '']
-['dont piss into the wind', '', '']
-['go to bat', 'go to bat for (one)', 'To act in support of one. ']
-['cooking something up', 'cook up', 'A noun or pronoun can be used between "cook" and "up."']
-['thumb up your ass', '', '']
-['shit dont stink', '', '']
-['cherry picking', 'cherry-pick', '1. To choose something very carefully to ensure that the best option is chosen, perhaps through means that provide one an unfair advantage or from a selection that others do not have ready access to. ']
-['hot to trot', 'hot to trot', '1. Eager or impatient to do something. ']
-['a wake up call', '', '']
-['cutting your teeth on something', "cut (one's) teeth on (something)", "To gain experience with something, especially at a young age (when one's teeth would be coming in). "]
-['dont go chasing waterfalls', '', '']
+# Examples Pipeline (Quick Guide)
+
+The workflow is nearly identical to the definitions pipeline, but examples may produce multiple rows per idiom.
+
+## 1. Scrape missing examples
+
+```bash
+python3 -m pipelines.examples.run
 ```
 
-# TODO
+Fetches idioms that have no entries in idioms_examples and scrapes one or more example sentences for each. Results are added to staging_scrapes with job = 'example'.
 
-# Update definition scraper
+## 2. Review and edit
 
-Right now all it does is return a txt file. I still need to update this script to return the data in a more useful format like json or csv.
+Open `staging_scrapes` in the DB UI and edit/review any examples.
 
-I also should update the input to expect an idiom ID that it will carry with it. So that the output will be more usefull. This means that I need to add the incoming idioms to the database first to get an ID assigned first. This means that i will probably want the input to also be a csv or json file.
+## 3. Apply approved examples
+
+```bash
+python3 -m pipelines.exmaples.apply_examples
+```
+
+## 4. Cleanup
+
+Delete all applied staging rows
+
+```bash
+python3 -m pipelines.examples.cleanup
+```
