@@ -1,7 +1,7 @@
 # acts like the entry point for its pipeline (like your current run_scraper.py).
 import argparse
 
-from connectors.supabase import get_idioms_missing_examples  # TODO: implement
+from pipelines.examples.get_idioms import get_idioms_missing_examples
 from pipelines.examples.scrape_examples import scrape_examples  # TODO: implement
 from pipelines.examples.stage_examples import stage_examples  # TODO: implement
 from pipelines.examples.apply_examples import apply_examples  # TODO: implement
@@ -33,7 +33,6 @@ def run_pipeline(
         f"({summary['success']} success, {summary['rejected']} rejected)"
     )
 
-    ## Need to implement apply_examples
     if apply:
         apply_examples()
 

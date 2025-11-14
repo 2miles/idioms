@@ -33,7 +33,7 @@ def apply_examples():
             # Insert into idioms_examples (NOT update)
             cur.execute(
                 """
-                INSERT INTO idioms_examples (idiom_id, example)
+                INSERT INTO idiom_examples (idiom_id, example)
                 VALUES (%s, %s);
                 """,
                 (idiom_id, example_text.strip()),
