@@ -14,10 +14,6 @@ def stage_definitions(results):
                 """
                 INSERT INTO staging_scrapes (idiom_id, job, content, status, review_status)
                 VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT (idiom_id, job) DO UPDATE
-                    SET status = EXCLUDED.status,
-                        content = EXCLUDED.content,
-                        review_status = EXCLUDED.review_status;
                 """,
                 (row["idiom_id"], row["job"], row["content"], row["status"], review_status),
             )
